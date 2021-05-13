@@ -10,6 +10,10 @@ class Client extends EventEmitter {
       this.emit('open')
     })
 
+    this.socket.on('error', err => {
+      this.emit('error', err);
+    })
+
     this.socket.on('message', m => {
       const message = JSON.parse(m)
 
@@ -18,6 +22,10 @@ class Client extends EventEmitter {
       } else {
         this.emit('message', m)
       }
+    })
+
+    this.socket.on('close', () => {
+      this.emit('disconnect');
     })
   }
 
@@ -35,7 +43,7 @@ class Client extends EventEmitter {
         const message = JSON.parse(m)
 
         if (message.type === 'publish' && message.topic === topic) {
-          return handler(m)
+            return handler(m);
         }
       })
     }

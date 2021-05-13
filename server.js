@@ -25,6 +25,10 @@ class Server extends EventEmitter {
       })
     }, 10000)
 
+    server.on('listening', () => {
+      this.emit('ready');
+    });
+
     server.on('connection', (socket, req) => {
       const clientId = req.headers['sec-websocket-key']
 
@@ -33,7 +37,7 @@ class Server extends EventEmitter {
       socket.isAlive = true
       socket.subscriptions = []
       socket.on('pong', () => {
-        this.isAlive = true
+        socket.isAlive = true
       })
 
       socket.on('message', message => {
@@ -113,7 +117,7 @@ class Server extends EventEmitter {
             Object.keys(allSubscribers).map(topic => {
               Object.keys(allSubscribers[topic]).map(client => {
                 allSubscribers[topic][client].send(
-                  JSON.stringify({ ...message, context: topic })
+                  JSON.stringify({ ...message, context: topic, clientId })
                 )
               })
             })
@@ -146,6 +150,12 @@ class Server extends EventEmitter {
           default:
         }
       })
+
+      socket.on('close', () => {
+          this.emit('disconnect', clientId);
+      })
+
+      this.emit('connect', clientId);
     })
   }
 }
